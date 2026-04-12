@@ -34,7 +34,6 @@ struct ContentView: View {
             TabContent(selectedTab: selectedTab)
                 .environmentObject(store)
         }
-        .edgesIgnoringSafeArea(.top)
     }
 }
 
@@ -42,56 +41,45 @@ struct TopBarView: View {
     @Binding var selectedTab: AppTab
 
     var body: some View {
-        VStack(spacing: 0) {
-            Color(hex: "16213e").frame(height: UIApplication.shared.connectedScenes
-                .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-                .first?.safeAreaInsets.top ?? 44)
+        HStack(spacing: 0) {
+            // Logo
+            Text("峰哥管家")
+                .font(.system(size: 14, weight: .black))
+                .foregroundColor(Color(hex: "e2b04a"))
+                .kerning(3)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
 
-            HStack(spacing: 0) {
-                // Logo
-                Text("峰哥管家")
-                    .font(.custom("", size: 14))
-                    .fontWeight(.black)
-                    .foregroundColor(Color(hex: "e2b04a"))
-                    .kerning(3)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 14)
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: 1, height: 24)
 
-                Rectangle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(width: 1)
-                    .padding(.vertical, 8)
-
-                // Nav tabs
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 0) {
-                        ForEach(AppTab.allCases, id: \.self) { tab in
-                            Button(action: { selectedTab = tab }) {
-                                VStack(spacing: 4) {
-                                    Text(tabLabel(tab))
-                                        .font(.system(size: 11))
-                                        .foregroundColor(selectedTab == tab ? Color(hex: "e2b04a") : Color.white.opacity(0.5))
-                                    Rectangle()
-                                        .fill(selectedTab == tab ? Color(hex: "e2b04a") : Color.clear)
-                                        .frame(height: 2)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
+            // Nav tabs
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(AppTab.allCases, id: \.self) { tab in
+                        Button(action: { selectedTab = tab }) {
+                            VStack(spacing: 3) {
+                                Text(tabLabel(tab))
+                                    .font(.system(size: 11))
+                                    .foregroundColor(selectedTab == tab ? Color(hex: "e2b04a") : Color.white.opacity(0.5))
+                                Rectangle()
+                                    .fill(selectedTab == tab ? Color(hex: "e2b04a") : Color.clear)
+                                    .frame(height: 2)
                             }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
                         }
                     }
                 }
-
-                Spacer()
-
-                // Sync dot
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 7, height: 7)
-                    .shadow(color: .green, radius: 3)
-                    .padding(.trailing, 12)
             }
-            .background(Color(hex: "16213e"))
+
+            // Sync dot
+            Circle()
+                .fill(Color.green)
+                .frame(width: 7, height: 7)
+                .shadow(color: .green, radius: 3)
+                .padding(.trailing, 12)
         }
         .background(Color(hex: "16213e"))
     }
