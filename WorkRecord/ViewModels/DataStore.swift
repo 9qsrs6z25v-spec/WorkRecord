@@ -148,7 +148,7 @@ class DataStore: ObservableObject {
         }
     }
 
-    private func pushToiCloud() {
+    func pushToiCloud() {
         guard iCloudEnabled else { return }
         saveiCloud(key: membersKey, data: members)
         saveiCloud(key: leavesKey, data: leaves)
@@ -325,12 +325,12 @@ class DataStore: ObservableObject {
 
     // MARK: - Export / Import
     struct ExportData: Codable {
-        let version: String
-        let exportedAt: String
-        let members: [Member]
-        let leaves: [Leave]
-        let meetings: [Meeting]
-        let duties: [Duty]
+        let version: String?
+        let exportedAt: String?
+        let members: [Member]?
+        let leaves: [Leave]?
+        let meetings: [Meeting]?
+        let duties: [Duty]?
     }
 
     func exportJSON() -> Data? {
@@ -342,19 +342,79 @@ class DataStore: ObservableObject {
             meetings: meetings,
             duties: duties
         )
-        return try? JSONEncoder().encode(export)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        return try? encoder.encode(export)
     }
 
     func importJSON(_ data: Data) throws {
-        let imported = try JSONDecoder().decode(ExportData.self, from: data)
-        members = imported.members
-        leaves = imported.leaves
-        meetings = imported.meetings
-        duties = imported.duties
-        saveMembers()
-        saveLeaves()
-        saveMeetings()
-        saveDuties()
+        // First try direct decode
+        if let imported = try? JSONDecoder().decode(ExportData.self, from: data) {
+            if let m = imported.members { members = m }
+            if let l = imported.leaves { leaves = l }
+            if let mt = imported.meetings { meetings = mt }
+            if let d = imported.duties { duties = d }
+            saveMembers(); saveLeaves(); saveMeetings(); saveDuties()
+            pushToiCloud()
+            return
+        }
+
+        // Fallback: try parsing as dictionary to handle type mismatches (e.g. grade Int vs String)
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw ImportError.invalidFormat
+        }
+
+        // Fix Member.grade: convert Int to String if needed
+        if var membersArr = json["members"] as? [[String: Any]] {
+            for i in membersArr.indices {
+                if let gradeInt = membersArr[i]["grade"] as? Int {
+                    membersArr[i]["grade"] = String(gradeInt)
+                }
+            }
+            if let fixed = try? JSONSerialization.data(withJSONObject: membersArr),
+               let decoded = try? JSONDecoder().decode([Member].self, from: fixed) {
+                members = decoded
+                saveMembers()
+            }
+        }
+
+        // Leaves
+        if let arr = json["leaves"] as? [[String: Any]],
+           let d = try? JSONSerialization.data(withJSONObject: arr),
+           let decoded = try? JSONDecoder().decode([Leave].self, from: d) {
+            leaves = decoded
+            saveLeaves()
+        }
+
+        // Meetings
+        if let arr = json["meetings"] as? [[String: Any]],
+           let d = try? JSONSerialization.data(withJSONObject: arr),
+           let decoded = try? JSONDecoder().decode([Meeting].self, from: d) {
+            meetings = decoded
+            saveMeetings()
+        }
+
+        // Duties - check nested "duty" key or top-level "duties"
+        let dutyArr = (json["duties"] ?? json["duty"]) as? [[String: Any]]
+        if let arr = dutyArr,
+           let d = try? JSONSerialization.data(withJSONObject: arr),
+           let decoded = try? JSONDecoder().decode([Duty].self, from: d) {
+            duties = decoded
+            saveDuties()
+        }
+
+        // Also handle old HTML format: data nested under "db" key
+        if let db = json["db"] as? [String: Any] {
+            try importJSON(JSONSerialization.data(withJSONObject: db))
+            return
+        }
+
+        pushToiCloud()
+    }
+
+    enum ImportError: LocalizedError {
+        case invalidFormat
+        var errorDescription: String? { "無法解析檔案格式，請確認是峰哥管家匯出的 JSON 備份檔。" }
     }
 
     func resetToPreset() {
