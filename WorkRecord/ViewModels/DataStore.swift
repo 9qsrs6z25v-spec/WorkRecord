@@ -263,38 +263,38 @@ class DataStore: ObservableObject {
 
     // MARK: - Preset Data
     static let presetMembers: [Member] = [
-        Member(id: 1, name: "曾煜凱", title: "工程師", sys: "Chemical", skill: "Slurry", grade: 31),
-        Member(id: 2, name: "黃啓銘", title: "資深工程師", sys: "Chemical", skill: "Gas, Chemical", grade: 32),
-        Member(id: 3, name: "鄭育承", title: "資深工程師", sys: "Chemical", skill: "Slurry, Chemical", grade: 32),
-        Member(id: 4, name: "黃意超", title: "資深工程師", sys: "Chemical", skill: "Gas", grade: 32),
-        Member(id: 5, name: "湯振廷", title: "工程師", sys: "Special Gas", skill: "Special Gas", grade: 31),
-        Member(id: 6, name: "李其霖", title: "資深工程師", sys: "Waste Chemical", skill: "Chemical, Waste", grade: 32),
-        Member(id: 7, name: "蔡亞宸", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
-        Member(id: 8, name: "姚佳妤", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
-        Member(id: 9, name: "張鉉台", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
-        Member(id: 10, name: "郭子靖", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
-        Member(id: 11, name: "李季恩", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
-        Member(id: 12, name: "丁家立", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
+        Member(id: 1, name: "王大明", title: "工程師", sys: "Chemical", skill: "Slurry", grade: 31),
+        Member(id: 2, name: "陳志豪", title: "資深工程師", sys: "Chemical", skill: "Gas, Chemical", grade: 32),
+        Member(id: 3, name: "林俊宏", title: "資深工程師", sys: "Chemical", skill: "Slurry, Chemical", grade: 32),
+        Member(id: 4, name: "張書維", title: "資深工程師", sys: "Chemical", skill: "Gas", grade: 32),
+        Member(id: 5, name: "劉冠廷", title: "工程師", sys: "Special Gas", skill: "Special Gas", grade: 31),
+        Member(id: 6, name: "李宗翰", title: "資深工程師", sys: "Waste Chemical", skill: "Chemical, Waste", grade: 32),
+        Member(id: 7, name: "蔡柏翔", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
+        Member(id: 8, name: "吳佳穎", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
+        Member(id: 9, name: "周建宇", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
+        Member(id: 10, name: "許家銘", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
+        Member(id: 11, name: "楊承翰", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
+        Member(id: 12, name: "趙韋廷", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
     ]
 
     static let presetLeaves: [Leave] = [
-        Leave(id: 1, name: "曾煜凱", type: "公假", from: "2026-04-13", to: "2026-04-13", days: 1, reason: "健檢"),
-        Leave(id: 2, name: "黃意超", type: "公假", from: "2026-04-08", to: "2026-04-08", days: 0.5, reason: "體檢（下午）"),
-        Leave(id: 3, name: "郭子靖", type: "病假", from: "2026-04-09", to: "2026-04-09", days: 1, reason: "回診左手脫臼"),
-        Leave(id: 4, name: "丁家立", type: "事假", from: "2026-04-08", to: "2026-04-08", days: 0.5, reason: "15:30後請假"),
-        Leave(id: 5, name: "鄭育承", type: "公假", from: "2026-04-10", to: "2026-04-10", days: 1, reason: "RPA 課程"),
-        Leave(id: 6, name: "李其霖", type: "公假", from: "2026-04-27", to: "2026-04-29", days: 3, reason: "缺氧作業主管訓練"),
-        Leave(id: 7, name: "蔡亞宸", type: "公假", from: "2026-04-10", to: "2026-04-10", days: 1, reason: "RPA 課程"),
+        Leave(id: 1, name: "王大明", type: "公假", from: "2026-04-13", to: "2026-04-13", days: 1, reason: "健檢"),
+        Leave(id: 2, name: "張書維", type: "公假", from: "2026-04-08", to: "2026-04-08", days: 0.5, reason: "體檢（下午）"),
+        Leave(id: 3, name: "許家銘", type: "病假", from: "2026-04-09", to: "2026-04-09", days: 1, reason: "回診"),
+        Leave(id: 4, name: "趙韋廷", type: "事假", from: "2026-04-08", to: "2026-04-08", days: 0.5, reason: "15:30後請假"),
+        Leave(id: 5, name: "林俊宏", type: "公假", from: "2026-04-10", to: "2026-04-10", days: 1, reason: "RPA 課程"),
+        Leave(id: 6, name: "李宗翰", type: "公假", from: "2026-04-27", to: "2026-04-29", days: 3, reason: "安全衛生訓練"),
+        Leave(id: 7, name: "蔡柏翔", type: "公假", from: "2026-04-10", to: "2026-04-10", days: 1, reason: "RPA 課程"),
     ]
 
     static let presetMeetings: [Meeting] = [
         Meeting(id: 1, date: "2026-04-07", name: "部門周會", time: "13:00–14:00", place: "會議室"),
         Meeting(id: 2, date: "2026-04-07", name: "部門月會", time: "15:00–16:00", place: "會議室"),
         Meeting(id: 3, date: "2026-04-08", name: "APM 會議", time: "09:30–10:30", place: "會議室"),
-        Meeting(id: 4, date: "2026-04-10", name: "面試 — 李新（中正大學化學生化）", time: "10:00–11:00", place: "會議室"),
-        Meeting(id: 5, date: "2026-04-13", name: "面試 — 李品勳（中山化學）", time: "10:00–11:00", place: "會議室"),
-        Meeting(id: 6, date: "2026-04-16", name: "面試 — 孫梵凱（清大化工）", time: "10:00–11:00", place: "會議室"),
-        Meeting(id: 7, date: "2026-04-17", name: "面試 — 黃駿維（中興化工）", time: "10:00–11:00", place: "會議室"),
-        Meeting(id: 8, date: "2026-04-19", name: "🎉 小漢堡抓周 — 大溪威斯丁", time: "13:30–19:30", place: "大溪威斯丁飯店", note: "小漢堡人生第一次抓周！"),
+        Meeting(id: 4, date: "2026-04-10", name: "新人面試 — A候選人", time: "10:00–11:00", place: "會議室"),
+        Meeting(id: 5, date: "2026-04-13", name: "新人面試 — B候選人", time: "10:00–11:00", place: "會議室"),
+        Meeting(id: 6, date: "2026-04-16", name: "新人面試 — C候選人", time: "10:00–11:00", place: "會議室"),
+        Meeting(id: 7, date: "2026-04-17", name: "設備維護討論會", time: "14:00–15:00", place: "會議室"),
+        Meeting(id: 8, date: "2026-04-19", name: "部門團建活動", time: "13:30–17:00", place: "園區餐廳", note: "季度團建聚餐"),
     ]
 }
