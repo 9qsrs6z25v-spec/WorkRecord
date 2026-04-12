@@ -55,32 +55,35 @@ struct LeavesView: View {
     }
 
     private var leaveTable: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack(spacing: 0) {
-                Text("員工").frame(width: 50, alignment: .leading)
-                Text("假別").frame(width: 45, alignment: .leading)
-                Text("起始").frame(width: 70, alignment: .leading)
-                Text("結束").frame(width: 70, alignment: .leading)
-                Text("天數").frame(width: 35, alignment: .leading)
-                Text("事由").frame(minWidth: 50, alignment: .leading)
-                Spacer()
-            }
-            .font(.system(size: 10, weight: .medium))
-            .foregroundColor(AppTheme.muted)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 9)
-            .background(AppTheme.paper)
+        ScrollView(.horizontal, showsIndicators: true) {
+            VStack(spacing: 0) {
+                // Header
+                HStack(spacing: 0) {
+                    Text("員工").frame(width: 50, alignment: .leading)
+                    Text("假別").frame(width: 50, alignment: .leading)
+                    Text("起始").frame(width: 80, alignment: .leading)
+                    Text("結束").frame(width: 80, alignment: .leading)
+                    Text("天數").frame(width: 40, alignment: .leading)
+                    Text("事由").frame(width: 100, alignment: .leading)
+                    Text("").frame(width: 70)
+                }
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(AppTheme.muted)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 9)
+                .background(AppTheme.paper)
 
-            // Rows
-            ForEach(monthLeaves) { l in
-                LeaveTableRow(leave: l, onEdit: {
-                    editingLeave = l
-                    showForm = true
-                }, onDelete: {
-                    store.deleteLeave(l.id)
-                })
+                // Rows
+                ForEach(monthLeaves) { l in
+                    LeaveTableRow(leave: l, onEdit: {
+                        editingLeave = l
+                        showForm = true
+                    }, onDelete: {
+                        store.deleteLeave(l.id)
+                    })
+                }
             }
+            .frame(minWidth: 470)
         }
     }
 }
@@ -99,27 +102,25 @@ struct LeaveTableRow: View {
                 .frame(width: 50, alignment: .leading)
 
             BadgeView(text: leave.type, style: BadgeStyle.forLeaveType(leave.type))
-                .frame(width: 45, alignment: .leading)
+                .frame(width: 50, alignment: .leading)
 
             Text(leave.from)
                 .font(.system(size: 10))
-                .frame(width: 70, alignment: .leading)
+                .frame(width: 80, alignment: .leading)
 
             Text(leave.to)
                 .font(.system(size: 10))
-                .frame(width: 70, alignment: .leading)
+                .frame(width: 80, alignment: .leading)
 
             Text("\(leave.days, specifier: "%.1g")天")
                 .font(.system(size: 12))
-                .frame(width: 35, alignment: .leading)
+                .frame(width: 40, alignment: .leading)
 
             Text(leave.reason.isEmpty ? "–" : leave.reason)
                 .font(.system(size: 11))
                 .foregroundColor(AppTheme.muted)
-                .frame(minWidth: 50, alignment: .leading)
+                .frame(width: 100, alignment: .leading)
                 .lineLimit(1)
-
-            Spacer()
 
             HStack(spacing: 4) {
                 SmallActionButton(title: "編", color: AppTheme.blue, action: onEdit)
@@ -127,6 +128,7 @@ struct LeaveTableRow: View {
                     showDeleteAlert = true
                 }
             }
+            .frame(width: 70)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 9)
