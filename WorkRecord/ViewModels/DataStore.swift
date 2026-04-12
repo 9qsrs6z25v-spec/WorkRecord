@@ -97,27 +97,24 @@ class DataStore: ObservableObject {
     private func checkVersion() {
         let saved = UserDefaults.standard.string(forKey: versionKey)
         if saved != appVersion {
-            let keys = UserDefaults.standard.dictionaryRepresentation().keys.filter {
-                $0.hasPrefix("fg2_") || $0.hasPrefix("fg_")
-            }
-            keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+            // Only update version marker, never delete user data
             UserDefaults.standard.set(appVersion, forKey: versionKey)
         }
     }
 
     // MARK: - Load
     func loadAll() {
-        // Try iCloud first, then local, then preset
+        // Try local first, then iCloud, then preset (only for first-ever launch)
         members = loadLocal(key: membersKey) ?? loadiCloud(key: membersKey) ?? Self.presetMembers
         leaves = loadLocal(key: leavesKey) ?? loadiCloud(key: leavesKey) ?? Self.presetLeaves
         meetings = loadLocal(key: meetingsKey) ?? loadiCloud(key: meetingsKey) ?? Self.presetMeetings
         duties = loadLocal(key: dutyKey) ?? loadiCloud(key: dutyKey) ?? []
 
-        // Ensure saved locally
-        saveLocal(key: membersKey, data: members)
-        saveLocal(key: leavesKey, data: leaves)
-        saveLocal(key: meetingsKey, data: meetings)
-        saveLocal(key: dutyKey, data: duties)
+        // Ensure saved locally (only writes if not already present)
+        if loadLocal(key: membersKey) as [Member]? == nil { saveLocal(key: membersKey, data: members) }
+        if loadLocal(key: leavesKey) as [Leave]? == nil { saveLocal(key: leavesKey, data: leaves) }
+        if loadLocal(key: meetingsKey) as [Meeting]? == nil { saveLocal(key: meetingsKey, data: meetings) }
+        if loadLocal(key: dutyKey) as [Duty]? == nil { saveLocal(key: dutyKey, data: duties) }
 
         // Push to iCloud if first time
         pushToiCloud()
