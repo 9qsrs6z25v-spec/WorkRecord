@@ -6,6 +6,10 @@ struct MembersView: View {
     @State private var editingMember: Member?
     @State private var showFieldMenu = false
 
+    // Sorting
+    @State private var sortColumn: String = ""
+    @State private var sortAsc: Bool = true
+
     // Column visibility (persisted)
     @AppStorage("mem_col_title") private var colTitle = true
     @AppStorage("mem_col_sys") private var colSys = true
@@ -13,6 +17,55 @@ struct MembersView: View {
     @AppStorage("mem_col_grade") private var colGrade = true
     @AppStorage("mem_col_plant") private var colPlant = false
     @AppStorage("mem_col_duty") private var colDuty = true
+
+    // Sorted members
+    private var sortedMembers: [Member] {
+        guard !sortColumn.isEmpty else { return store.members }
+        return store.members.sorted { a, b in
+            let cmp: Int
+            switch sortColumn {
+            case "姓名":
+                cmp = a.name.localizedCompare(b.name) == .orderedAscending ? -1 : 1
+            case "職稱":
+                let order = ["部經理", "經理", "副理", "主任工程師", "資深工程師", "工程師"]
+                let ai = order.firstIndex(of: a.title) ?? order.count
+                let bi = order.firstIndex(of: b.title) ?? order.count
+                cmp = ai < bi ? -1 : (ai > bi ? 1 : 0)
+            case "系統":
+                cmp = (a.sys).localizedCompare(b.sys) == .orderedAscending ? -1 : 1
+            case "技能":
+                cmp = (a.skill).localizedCompare(b.skill) == .orderedAscending ? -1 : 1
+            case "職等":
+                let gradeOrder = ["36", "35", "34", "33M", "33", "32", "31"]
+                let ai = gradeOrder.firstIndex(of: a.grade ?? "31") ?? gradeOrder.count
+                let bi = gradeOrder.firstIndex(of: b.grade ?? "31") ?? gradeOrder.count
+                cmp = ai < bi ? -1 : (ai > bi ? 1 : 0)
+            case "廠區":
+                cmp = (a.plant ?? "").localizedCompare(b.plant ?? "") == .orderedAscending ? -1 : 1
+            case "值班考核":
+                cmp = (a.dutyPass ? 0 : 1) - (b.dutyPass ? 0 : 1)
+            default:
+                cmp = 0
+            }
+            return sortAsc ? cmp < 0 : cmp > 0
+        }
+    }
+
+    private func toggleSort(_ col: String) {
+        if sortColumn == col {
+            sortAsc.toggle()
+        } else {
+            sortColumn = col
+            sortAsc = true
+        }
+    }
+
+    private func sortIndicator(_ col: String) -> String {
+        if sortColumn == col {
+            return sortAsc ? " ▲" : " ▼"
+        }
+        return ""
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -77,6 +130,15 @@ struct MembersView: View {
         }
     }
 
+    // MARK: - Sortable Header
+    private func sortableHeader(_ label: String, width: CGFloat, alignment: Alignment = .leading) -> some View {
+        Button(action: { toggleSort(label) }) {
+            Text("\(label)\(sortIndicator(label))")
+                .frame(width: width, alignment: alignment)
+                .foregroundColor(sortColumn == label ? AppTheme.ink : AppTheme.muted)
+        }
+    }
+
     // MARK: - Table
     private var memberTable: some View {
         VStack(spacing: 0) {
@@ -85,23 +147,22 @@ struct MembersView: View {
                     // Header
                     HStack(spacing: 0) {
                         Text("序").frame(width: 25, alignment: .leading)
-                        Text("姓名").frame(width: 55, alignment: .leading)
-                        if colTitle { Text("職稱").frame(width: 70, alignment: .leading) }
-                        if colSys { Text("系統").frame(width: 70, alignment: .leading) }
-                        if colSkill { Text("技能").frame(width: 90, alignment: .leading) }
-                        if colGrade { Text("職等").frame(width: 35, alignment: .leading) }
-                        if colPlant { Text("廠區").frame(width: 50, alignment: .leading) }
-                        if colDuty { Text("值班考核").frame(width: 65, alignment: .center) }
+                        sortableHeader("姓名", width: 55)
+                        if colTitle { sortableHeader("職稱", width: 70) }
+                        if colSys { sortableHeader("系統", width: 70) }
+                        if colSkill { sortableHeader("技能", width: 90) }
+                        if colGrade { sortableHeader("職等", width: 35) }
+                        if colPlant { sortableHeader("廠區", width: 50) }
+                        if colDuty { sortableHeader("值班考核", width: 65, alignment: .center) }
                         Spacer()
                     }
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(AppTheme.muted)
                     .padding(.vertical, 7)
                     .padding(.horizontal, 9)
                     .background(AppTheme.paper)
 
                     // Rows
-                    ForEach(Array(store.members.enumerated()), id: \.element.id) { idx, m in
+                    ForEach(Array(sortedMembers.enumerated()), id: \.element.id) { idx, m in
                         MemberTableRow(
                             index: idx + 1, member: m,
                             colTitle: colTitle, colSys: colSys, colSkill: colSkill,
