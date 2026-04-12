@@ -4,6 +4,15 @@ struct MembersView: View {
     @EnvironmentObject var store: DataStore
     @State private var showForm = false
     @State private var editingMember: Member?
+    @State private var showFieldMenu = false
+
+    // Column visibility (persisted)
+    @AppStorage("mem_col_title") private var colTitle = true
+    @AppStorage("mem_col_sys") private var colSys = true
+    @AppStorage("mem_col_skill") private var colSkill = true
+    @AppStorage("mem_col_grade") private var colGrade = true
+    @AppStorage("mem_col_plant") private var colPlant = false
+    @AppStorage("mem_col_duty") private var colDuty = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -15,6 +24,10 @@ struct MembersView: View {
                         Text("成員列表")
                             .font(.system(size: 13, weight: .bold))
                         Spacer()
+
+                        // Field toggle button
+                        fieldMenuButton
+
                         Button("＋ 新增成員") {
                             editingMember = nil
                             showForm = true
@@ -38,19 +51,47 @@ struct MembersView: View {
         }
     }
 
+    // MARK: - Field Menu
+    private var fieldMenuButton: some View {
+        Menu {
+            Text("表格顯示欄位")
+            Toggle("職稱", isOn: $colTitle)
+            Toggle("系統", isOn: $colSys)
+            Toggle("技能", isOn: $colSkill)
+            Toggle("職等", isOn: $colGrade)
+            Toggle("廠區", isOn: $colPlant)
+            Toggle("值班考核", isOn: $colDuty)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 9))
+                Text("顯示欄位")
+                    .font(.system(size: 10))
+            }
+            .foregroundColor(AppTheme.muted)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(AppTheme.paper)
+            .cornerRadius(20)
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppTheme.border, lineWidth: 1))
+        }
+    }
+
+    // MARK: - Table
     private var memberTable: some View {
         VStack(spacing: 0) {
-            // Header
             ScrollView(.horizontal, showsIndicators: false) {
                 VStack(spacing: 0) {
+                    // Header
                     HStack(spacing: 0) {
                         Text("序").frame(width: 25, alignment: .leading)
                         Text("姓名").frame(width: 55, alignment: .leading)
-                        Text("職稱").frame(width: 70, alignment: .leading)
-                        Text("系統").frame(width: 70, alignment: .leading)
-                        Text("技能").frame(width: 90, alignment: .leading)
-                        Text("職等").frame(width: 35, alignment: .leading)
-                        Text("值班考核").frame(width: 65, alignment: .center)
+                        if colTitle { Text("職稱").frame(width: 70, alignment: .leading) }
+                        if colSys { Text("系統").frame(width: 70, alignment: .leading) }
+                        if colSkill { Text("技能").frame(width: 90, alignment: .leading) }
+                        if colGrade { Text("職等").frame(width: 35, alignment: .leading) }
+                        if colPlant { Text("廠區").frame(width: 50, alignment: .leading) }
+                        if colDuty { Text("值班考核").frame(width: 65, alignment: .center) }
                         Spacer()
                     }
                     .font(.system(size: 10, weight: .medium))
@@ -59,13 +100,20 @@ struct MembersView: View {
                     .padding(.horizontal, 9)
                     .background(AppTheme.paper)
 
+                    // Rows
                     ForEach(Array(store.members.enumerated()), id: \.element.id) { idx, m in
-                        MemberTableRow(index: idx + 1, member: m, onEdit: {
-                            editingMember = m
-                            showForm = true
-                        }, onDelete: {
-                            store.deleteMember(m.id)
-                        })
+                        MemberTableRow(
+                            index: idx + 1, member: m,
+                            colTitle: colTitle, colSys: colSys, colSkill: colSkill,
+                            colGrade: colGrade, colPlant: colPlant, colDuty: colDuty,
+                            onEdit: {
+                                editingMember = m
+                                showForm = true
+                            },
+                            onDelete: {
+                                store.deleteMember(m.id)
+                            }
+                        )
                     }
                 }
             }
@@ -77,6 +125,12 @@ struct MembersView: View {
 struct MemberTableRow: View {
     let index: Int
     let member: Member
+    var colTitle: Bool = true
+    var colSys: Bool = true
+    var colSkill: Bool = true
+    var colGrade: Bool = true
+    var colPlant: Bool = false
+    var colDuty: Bool = true
     let onEdit: () -> Void
     let onDelete: () -> Void
     @State private var showDeleteAlert = false
@@ -90,34 +144,50 @@ struct MemberTableRow: View {
                 .font(.system(size: 12, weight: .bold))
                 .frame(width: 55, alignment: .leading)
 
-            Text(member.title)
-                .font(.system(size: 12))
-                .frame(width: 70, alignment: .leading)
-
-            Text(member.sys.isEmpty ? "–" : member.sys)
-                .font(.system(size: 12))
-                .frame(width: 70, alignment: .leading)
-                .lineLimit(1)
-
-            Text(member.skill.isEmpty ? "–" : member.skill)
-                .font(.system(size: 12))
-                .frame(width: 90, alignment: .leading)
-                .lineLimit(1)
-
-            Text(member.grade ?? "–")
-                .font(.system(size: 12))
-                .frame(width: 35, alignment: .leading)
-
-            HStack {
-                if member.dutyPass {
-                    BadgeView(text: "✅ 通過", style: BadgeStyle(
-                        bg: Color(hex: "e8f5ee"), fg: AppTheme.sage, border: Color(hex: "b5ddc5")))
-                } else {
-                    BadgeView(text: "— 未通過", style: BadgeStyle(
-                        bg: Color(hex: "f5f0e8"), fg: AppTheme.muted, border: AppTheme.border))
-                }
+            if colTitle {
+                Text(member.title)
+                    .font(.system(size: 12))
+                    .frame(width: 70, alignment: .leading)
             }
-            .frame(width: 65, alignment: .center)
+
+            if colSys {
+                Text(member.sys.isEmpty ? "–" : member.sys)
+                    .font(.system(size: 12))
+                    .frame(width: 70, alignment: .leading)
+                    .lineLimit(1)
+            }
+
+            if colSkill {
+                Text(member.skill.isEmpty ? "–" : member.skill)
+                    .font(.system(size: 12))
+                    .frame(width: 90, alignment: .leading)
+                    .lineLimit(1)
+            }
+
+            if colGrade {
+                Text(member.grade ?? "–")
+                    .font(.system(size: 12))
+                    .frame(width: 35, alignment: .leading)
+            }
+
+            if colPlant {
+                Text(member.plant ?? "–")
+                    .font(.system(size: 12))
+                    .frame(width: 50, alignment: .leading)
+            }
+
+            if colDuty {
+                HStack {
+                    if member.dutyPass {
+                        BadgeView(text: "通過", style: BadgeStyle(
+                            bg: Color(hex: "e8f5ee"), fg: AppTheme.sage, border: Color(hex: "b5ddc5")))
+                    } else {
+                        BadgeView(text: "未通過", style: BadgeStyle(
+                            bg: Color(hex: "f5f0e8"), fg: AppTheme.muted, border: AppTheme.border))
+                    }
+                }
+                .frame(width: 65, alignment: .center)
+            }
 
             Spacer()
 
