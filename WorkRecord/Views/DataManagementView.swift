@@ -15,6 +15,9 @@ struct DataManagementView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionTitle(icon: "💾", title: "資料管理")
 
+            // iCloud sync status
+            iCloudCard
+
             // Export
             exportCard
 
@@ -36,6 +39,53 @@ struct DataManagementView: View {
         }
         .sheet(isPresented: $showImportPicker) {
             DocumentPicker(onPick: importFile)
+        }
+    }
+
+    // MARK: - iCloud Card
+    private var iCloudCard: some View {
+        CardView(borderColor: store.iCloudEnabled ? AppTheme.sage.opacity(0.3) : AppTheme.border) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("iCloud 同步")
+                        .font(.system(size: 13, weight: .bold))
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(store.iCloudEnabled ? AppTheme.sage : AppTheme.muted)
+                            .frame(width: 8, height: 8)
+                        Text(store.iCloudEnabled ? "已啟用" : "未啟用")
+                            .font(.system(size: 11))
+                            .foregroundColor(store.iCloudEnabled ? AppTheme.sage : AppTheme.muted)
+                    }
+                }
+
+                if store.iCloudEnabled {
+                    Text("資料會自動透過 iCloud 同步到你所有登入相同 Apple ID 的裝置。每次新增、編輯、刪除都會即時同步。")
+                        .font(.system(size: 12))
+                        .foregroundColor(AppTheme.muted)
+
+                    if let syncTime = store.lastSyncTime {
+                        let formatter: DateFormatter = {
+                            let f = DateFormatter()
+                            f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                            return f
+                        }()
+                        HStack {
+                            Text("最後同步")
+                                .font(.system(size: 10))
+                                .foregroundColor(AppTheme.muted)
+                            Text(formatter.string(from: syncTime))
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(AppTheme.sage)
+                        }
+                    }
+                } else {
+                    Text("iCloud 未登入或未啟用。請到「設定 > Apple ID > iCloud」確認已開啟，即可自動跨裝置同步資料。")
+                        .font(.system(size: 12))
+                        .foregroundColor(AppTheme.muted)
+                }
+            }
         }
     }
 

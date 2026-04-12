@@ -13,6 +13,10 @@ class DataStore: ObservableObject {
     @Published var calendarYear: Int = Calendar.current.component(.year, from: Date())
     @Published var calendarMonth: Int = Calendar.current.component(.month, from: Date()) - 1 // 0-based
 
+    // MARK: - iCloud Sync State
+    @Published var iCloudEnabled: Bool = false
+    @Published var lastSyncTime: Date? = nil
+
     // MARK: - Keys
     private let membersKey = "fg2_members"
     private let leavesKey = "fg2_leaves"
@@ -20,11 +24,73 @@ class DataStore: ObservableObject {
     private let dutyKey = "fg2_duty"
     private let versionKey = "fg2_app_version"
     private let appVersion = "v3_work_only"
+    private let lastSyncKey = "fg2_last_sync"
+
+    private let iCloud = NSUbiquitousKeyValueStore.default
 
     // MARK: - Init
     init() {
         checkVersion()
+        setupiCloudSync()
         loadAll()
+    }
+
+    // MARK: - iCloud Setup
+    private func setupiCloudSync() {
+        // Check if iCloud is available
+        if FileManager.default.ubiquityIdentityToken != nil {
+            iCloudEnabled = true
+
+            // Listen for remote changes
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(iCloudDidChange),
+                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+                object: iCloud
+            )
+
+            // Force initial sync
+            iCloud.synchronize()
+        }
+    }
+
+    @objc private func iCloudDidChange(_ notification: Notification) {
+        DispatchQueue.main.async { [weak self] in
+            self?.mergeFromiCloud()
+        }
+    }
+
+    /// Pull data from iCloud (remote wins if newer)
+    private func mergeFromiCloud() {
+        let remoteSync = iCloud.object(forKey: lastSyncKey) as? Double ?? 0
+        let localSync = UserDefaults.standard.double(forKey: lastSyncKey)
+
+        // Only overwrite local if remote is newer
+        guard remoteSync > localSync else { return }
+
+        if let data = iCloud.data(forKey: membersKey),
+           let decoded = try? JSONDecoder().decode([Member].self, from: data) {
+            members = decoded
+            saveLocal(key: membersKey, data: members)
+        }
+        if let data = iCloud.data(forKey: leavesKey),
+           let decoded = try? JSONDecoder().decode([Leave].self, from: data) {
+            leaves = decoded
+            saveLocal(key: leavesKey, data: leaves)
+        }
+        if let data = iCloud.data(forKey: meetingsKey),
+           let decoded = try? JSONDecoder().decode([Meeting].self, from: data) {
+            meetings = decoded
+            saveLocal(key: meetingsKey, data: meetings)
+        }
+        if let data = iCloud.data(forKey: dutyKey),
+           let decoded = try? JSONDecoder().decode([Duty].self, from: data) {
+            duties = decoded
+            saveLocal(key: dutyKey, data: duties)
+        }
+
+        UserDefaults.standard.set(remoteSync, forKey: lastSyncKey)
+        lastSyncTime = Date(timeIntervalSince1970: remoteSync)
     }
 
     // MARK: - Version Check
@@ -41,28 +107,69 @@ class DataStore: ObservableObject {
 
     // MARK: - Load
     func loadAll() {
-        members = load(key: membersKey) ?? Self.presetMembers
-        leaves = load(key: leavesKey) ?? Self.presetLeaves
-        meetings = load(key: meetingsKey) ?? Self.presetMeetings
-        duties = load(key: dutyKey) ?? []
+        // Try iCloud first, then local, then preset
+        members = loadLocal(key: membersKey) ?? loadiCloud(key: membersKey) ?? Self.presetMembers
+        leaves = loadLocal(key: leavesKey) ?? loadiCloud(key: leavesKey) ?? Self.presetLeaves
+        meetings = loadLocal(key: meetingsKey) ?? loadiCloud(key: meetingsKey) ?? Self.presetMeetings
+        duties = loadLocal(key: dutyKey) ?? loadiCloud(key: dutyKey) ?? []
 
-        // Write defaults if first load
-        if load(key: membersKey) as [Member]? == nil { save(key: membersKey, data: members) }
-        if load(key: leavesKey) as [Leave]? == nil { save(key: leavesKey, data: leaves) }
-        if load(key: meetingsKey) as [Meeting]? == nil { save(key: meetingsKey, data: meetings) }
-        if load(key: dutyKey) as [Duty]? == nil { save(key: dutyKey, data: duties) }
+        // Ensure saved locally
+        saveLocal(key: membersKey, data: members)
+        saveLocal(key: leavesKey, data: leaves)
+        saveLocal(key: meetingsKey, data: meetings)
+        saveLocal(key: dutyKey, data: duties)
+
+        // Push to iCloud if first time
+        pushToiCloud()
     }
 
-    // MARK: - Persistence Helpers
-    private func load<T: Codable>(key: String) -> T? {
+    // MARK: - Local Persistence
+    private func loadLocal<T: Codable>(key: String) -> T? {
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(T.self, from: data)
     }
 
-    private func save<T: Codable>(key: String, data: T) {
+    private func saveLocal<T: Codable>(key: String, data: T) {
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: key)
         }
+    }
+
+    // MARK: - iCloud Persistence
+    private func loadiCloud<T: Codable>(key: String) -> T? {
+        guard iCloudEnabled, let data = iCloud.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(T.self, from: data)
+    }
+
+    private func saveiCloud<T: Codable>(key: String, data: T) {
+        guard iCloudEnabled else { return }
+        if let encoded = try? JSONEncoder().encode(data) {
+            iCloud.set(encoded, forKey: key)
+        }
+    }
+
+    private func pushToiCloud() {
+        guard iCloudEnabled else { return }
+        saveiCloud(key: membersKey, data: members)
+        saveiCloud(key: leavesKey, data: leaves)
+        saveiCloud(key: meetingsKey, data: meetings)
+        saveiCloud(key: dutyKey, data: duties)
+        let now = Date().timeIntervalSince1970
+        iCloud.set(now, forKey: lastSyncKey)
+        UserDefaults.standard.set(now, forKey: lastSyncKey)
+        iCloud.synchronize()
+        lastSyncTime = Date()
+    }
+
+    // MARK: - Save (local + iCloud)
+    private func save<T: Codable>(key: String, data: T) {
+        saveLocal(key: key, data: data)
+        saveiCloud(key: key, data: data)
+        let now = Date().timeIntervalSince1970
+        iCloud.set(now, forKey: lastSyncKey)
+        UserDefaults.standard.set(now, forKey: lastSyncKey)
+        if iCloudEnabled { iCloud.synchronize() }
+        lastSyncTime = Date()
     }
 
     func saveMembers() { save(key: membersKey, data: members) }
