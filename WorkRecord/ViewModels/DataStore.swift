@@ -263,18 +263,18 @@ class DataStore: ObservableObject {
 
     // MARK: - Preset Data
     static let presetMembers: [Member] = [
-        Member(id: 1, name: "王大明", title: "工程師", sys: "Chemical", skill: "Slurry", grade: 31),
-        Member(id: 2, name: "陳志豪", title: "資深工程師", sys: "Chemical", skill: "Gas, Chemical", grade: 32),
-        Member(id: 3, name: "林俊宏", title: "資深工程師", sys: "Chemical", skill: "Slurry, Chemical", grade: 32),
-        Member(id: 4, name: "張書維", title: "資深工程師", sys: "Chemical", skill: "Gas", grade: 32),
-        Member(id: 5, name: "劉冠廷", title: "工程師", sys: "Special Gas", skill: "Special Gas", grade: 31),
-        Member(id: 6, name: "李宗翰", title: "資深工程師", sys: "Waste Chemical", skill: "Chemical, Waste", grade: 32),
-        Member(id: 7, name: "蔡柏翔", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
-        Member(id: 8, name: "吳佳穎", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
-        Member(id: 9, name: "周建宇", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
-        Member(id: 10, name: "許家銘", title: "工程師", sys: "Slurry", skill: "Slurry", grade: 31),
-        Member(id: 11, name: "楊承翰", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
-        Member(id: 12, name: "趙韋廷", title: "工程師", sys: "Chemical", skill: "Chemical", grade: 31),
+        Member(id: 1, name: "王大明", title: "工程師", sys: "Chemical", skill: "Slurry", grade: "31"),
+        Member(id: 2, name: "陳志豪", title: "資深工程師", sys: "Chemical", skill: "Gas, Chemical", grade: "32"),
+        Member(id: 3, name: "林俊宏", title: "資深工程師", sys: "Chemical", skill: "Slurry, Chemical", grade: "32"),
+        Member(id: 4, name: "張書維", title: "資深工程師", sys: "Chemical", skill: "Gas", grade: "32"),
+        Member(id: 5, name: "劉冠廷", title: "工程師", sys: "Special Gas", skill: "Special Gas", grade: "31"),
+        Member(id: 6, name: "李宗翰", title: "資深工程師", sys: "Waste Chemical", skill: "Chemical, Waste", grade: "32"),
+        Member(id: 7, name: "蔡柏翔", title: "工程師", sys: "Slurry", skill: "Slurry", grade: "31"),
+        Member(id: 8, name: "吳佳穎", title: "工程師", sys: "Chemical", skill: "Chemical", grade: "31"),
+        Member(id: 9, name: "周建宇", title: "工程師", sys: "Slurry", skill: "Slurry", grade: "31"),
+        Member(id: 10, name: "許家銘", title: "工程師", sys: "Slurry", skill: "Slurry", grade: "31"),
+        Member(id: 11, name: "楊承翰", title: "工程師", sys: "Chemical", skill: "Chemical", grade: "31"),
+        Member(id: 12, name: "趙韋廷", title: "工程師", sys: "Chemical", skill: "Chemical", grade: "31"),
     ]
 
     static let presetLeaves: [Leave] = [

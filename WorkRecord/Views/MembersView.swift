@@ -104,7 +104,7 @@ struct MemberTableRow: View {
                 .frame(width: 90, alignment: .leading)
                 .lineLimit(1)
 
-            Text(member.grade != nil ? "\(member.grade!)" : "–")
+            Text(member.grade ?? "–")
                 .font(.system(size: 12))
                 .frame(width: 35, alignment: .leading)
 
@@ -148,7 +148,7 @@ struct MemberFormSheet: View {
     @State private var title = "工程師"
     @State private var sys = ""
     @State private var skill = ""
-    @State private var grade = ""
+    @State private var grade = "31"
     @State private var plant = ""
     @State private var dutyPass = false
 
@@ -160,21 +160,24 @@ struct MemberFormSheet: View {
                 Section(header: Text("基本資訊")) {
                     TextField("姓名", text: $name)
 
-                    Picker("職稱", selection: $title) {
-                        ForEach(titleOptions, id: \.self) { Text($0) }
+                    Picker("職等", selection: $grade) {
+                        ForEach(gradeOptions, id: \.self) { g in
+                            Text("\(g) — \(titleForGrade(g))").tag(g)
+                        }
+                    }
+                    .onChange(of: grade) { newGrade in
+                        title = titleForGrade(newGrade)
+                    }
+
+                    HStack {
+                        Text("職稱")
+                        Spacer()
+                        Text(title)
+                            .foregroundColor(AppTheme.muted)
                     }
 
                     TextField("系統 (如 Chemical)", text: $sys)
                     TextField("技能 (如 Slurry)", text: $skill)
-
-                    HStack {
-                        Text("職等")
-                        Spacer()
-                        TextField("31", text: $grade)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.numberPad)
-                            .frame(width: 60)
-                    }
                 }
 
                 Section(header: Text("廠區與考核")) {
@@ -184,7 +187,7 @@ struct MemberFormSheet: View {
                         Text("AP6B").tag("AP6B")
                     }
 
-                    Toggle("✅ 已通過值班考核", isOn: $dutyPass)
+                    Toggle("已通過值班考核", isOn: $dutyPass)
                 }
             }
             .navigationTitle(isEditing ? "編輯成員" : "新增成員")
@@ -208,25 +211,25 @@ struct MemberFormSheet: View {
             title = m.title
             sys = m.sys
             skill = m.skill
-            grade = m.grade != nil ? "\(m.grade!)" : ""
+            grade = m.grade ?? "31"
             plant = m.plant ?? ""
             dutyPass = m.dutyPass
         }
     }
 
     private func saveMember() {
-        let gradeInt = Int(grade)
+        title = titleForGrade(grade)
         if var m = member {
             m.name = name
             m.title = title
             m.sys = sys
             m.skill = skill
-            m.grade = gradeInt
+            m.grade = grade
             m.plant = plant.isEmpty ? nil : plant
             m.dutyPass = dutyPass
             store.updateMember(m)
         } else {
-            let m = Member(id: store.newId(), name: name, title: title, sys: sys, skill: skill, grade: gradeInt, plant: plant.isEmpty ? nil : plant, dutyPass: dutyPass)
+            let m = Member(id: store.newId(), name: name, title: title, sys: sys, skill: skill, grade: grade, plant: plant.isEmpty ? nil : plant, dutyPass: dutyPass)
             store.addMember(m)
         }
         dismiss()
