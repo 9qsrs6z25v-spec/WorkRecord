@@ -54,11 +54,13 @@ struct AttendanceView: View {
         }
 
         let total = store.members.count
-        let rate = isHol
-            ? (total > 0 ? Int(round(Double(duty) / Double(total) * 100)) : 0)
-            : (total > 0 ? Int(round(Double(present) / Double(total) * 100)) : 0)
+        // 平日：出勤 = present + duty（值班也是出勤）
+        // 假日：出勤 = duty
+        let activeCount = isHol ? duty : (present + duty)
+        let leaveCount = isHol ? (total - duty) : leave
+        let rate = total > 0 ? Int(round(Double(activeCount) / Double(total) * 100)) : 0
 
-        return (isHol ? duty : present, isHol ? (total - duty) : leave, isHol ? 0 : sick, rate)
+        return (activeCount, leaveCount, isHol ? 0 : sick, rate)
     }
 
     private var statsGrid: some View {
