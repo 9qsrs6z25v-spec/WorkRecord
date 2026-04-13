@@ -5,6 +5,13 @@ struct LeavesView: View {
     @State private var showForm = false
     @State private var editingLeave: Leave?
 
+    // Column visibility (persisted)
+    @AppStorage("leave_col_type") private var colType = true
+    @AppStorage("leave_col_from") private var colFrom = true
+    @AppStorage("leave_col_to") private var colTo = true
+    @AppStorage("leave_col_days") private var colDays = true
+    @AppStorage("leave_col_reason") private var colReason = true
+
     private var currentYear: Int { Calendar.current.component(.year, from: store.selectedDate) }
     private var currentMonth: Int { Calendar.current.component(.month, from: store.selectedDate) - 1 }
 
@@ -26,6 +33,10 @@ struct LeavesView: View {
                             .font(.system(size: 10))
                             .foregroundColor(AppTheme.muted)
                         Spacer()
+
+                        // Field toggle
+                        fieldMenuButton
+
                         Button("＋ 新增") {
                             editingLeave = nil
                             showForm = true
@@ -40,7 +51,6 @@ struct LeavesView: View {
                     if monthLeaves.isEmpty {
                         EmptyStateView(icon: "🏖️", message: "本月無請假記錄")
                     } else {
-                        // Table header
                         leaveTable
                     }
                 }
@@ -54,17 +64,43 @@ struct LeavesView: View {
         }
     }
 
+    // MARK: - Field Menu
+    private var fieldMenuButton: some View {
+        Menu {
+            Text("顯示欄位")
+            Toggle("假別", isOn: $colType)
+            Toggle("起始日期", isOn: $colFrom)
+            Toggle("結束日期", isOn: $colTo)
+            Toggle("天數", isOn: $colDays)
+            Toggle("事由", isOn: $colReason)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 9))
+                Text("顯示欄位")
+                    .font(.system(size: 10))
+            }
+            .foregroundColor(AppTheme.muted)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(AppTheme.paper)
+            .cornerRadius(20)
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppTheme.border, lineWidth: 1))
+        }
+    }
+
+    // MARK: - Table
     private var leaveTable: some View {
         ScrollView(.horizontal, showsIndicators: true) {
             VStack(spacing: 0) {
                 // Header
                 HStack(spacing: 0) {
                     Text("員工").frame(width: 50, alignment: .leading)
-                    Text("假別").frame(width: 50, alignment: .leading)
-                    Text("起始").frame(width: 80, alignment: .leading)
-                    Text("結束").frame(width: 80, alignment: .leading)
-                    Text("天數").frame(width: 40, alignment: .leading)
-                    Text("事由").frame(width: 100, alignment: .leading)
+                    if colType { Text("假別").frame(width: 50, alignment: .leading) }
+                    if colFrom { Text("起始").frame(width: 80, alignment: .leading) }
+                    if colTo { Text("結束").frame(width: 80, alignment: .leading) }
+                    if colDays { Text("天數").frame(width: 40, alignment: .leading) }
+                    if colReason { Text("事由").frame(width: 100, alignment: .leading) }
                     Text("").frame(width: 70)
                 }
                 .font(.system(size: 10, weight: .medium))
@@ -75,15 +111,20 @@ struct LeavesView: View {
 
                 // Rows
                 ForEach(monthLeaves) { l in
-                    LeaveTableRow(leave: l, onEdit: {
-                        editingLeave = l
-                        showForm = true
-                    }, onDelete: {
-                        store.deleteLeave(l.id)
-                    })
+                    LeaveTableRow(
+                        leave: l,
+                        colType: colType, colFrom: colFrom, colTo: colTo,
+                        colDays: colDays, colReason: colReason,
+                        onEdit: {
+                            editingLeave = l
+                            showForm = true
+                        },
+                        onDelete: {
+                            store.deleteLeave(l.id)
+                        }
+                    )
                 }
             }
-            .frame(minWidth: 470)
         }
     }
 }
@@ -91,6 +132,11 @@ struct LeavesView: View {
 // MARK: - Leave Table Row
 struct LeaveTableRow: View {
     let leave: Leave
+    var colType: Bool = true
+    var colFrom: Bool = true
+    var colTo: Bool = true
+    var colDays: Bool = true
+    var colReason: Bool = true
     let onEdit: () -> Void
     let onDelete: () -> Void
     @State private var showDeleteAlert = false
@@ -101,26 +147,36 @@ struct LeaveTableRow: View {
                 .font(.system(size: 12, weight: .bold))
                 .frame(width: 50, alignment: .leading)
 
-            BadgeView(text: leave.type, style: BadgeStyle.forLeaveType(leave.type))
-                .frame(width: 50, alignment: .leading)
+            if colType {
+                BadgeView(text: leave.type, style: BadgeStyle.forLeaveType(leave.type))
+                    .frame(width: 50, alignment: .leading)
+            }
 
-            Text(leave.from)
-                .font(.system(size: 10))
-                .frame(width: 80, alignment: .leading)
+            if colFrom {
+                Text(leave.from)
+                    .font(.system(size: 10))
+                    .frame(width: 80, alignment: .leading)
+            }
 
-            Text(leave.to)
-                .font(.system(size: 10))
-                .frame(width: 80, alignment: .leading)
+            if colTo {
+                Text(leave.to)
+                    .font(.system(size: 10))
+                    .frame(width: 80, alignment: .leading)
+            }
 
-            Text("\(leave.days, specifier: "%.1g")天")
-                .font(.system(size: 12))
-                .frame(width: 40, alignment: .leading)
+            if colDays {
+                Text("\(leave.days, specifier: "%.1g")天")
+                    .font(.system(size: 12))
+                    .frame(width: 40, alignment: .leading)
+            }
 
-            Text(leave.reason.isEmpty ? "–" : leave.reason)
-                .font(.system(size: 11))
-                .foregroundColor(AppTheme.muted)
-                .frame(width: 100, alignment: .leading)
-                .lineLimit(1)
+            if colReason {
+                Text(leave.reason.isEmpty ? "–" : leave.reason)
+                    .font(.system(size: 11))
+                    .foregroundColor(AppTheme.muted)
+                    .frame(width: 100, alignment: .leading)
+                    .lineLimit(1)
+            }
 
             HStack(spacing: 4) {
                 SmallActionButton(title: "編", color: AppTheme.blue, action: onEdit)
