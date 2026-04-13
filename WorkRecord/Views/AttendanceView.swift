@@ -226,6 +226,8 @@ struct AttendanceCard: View {
                     .foregroundColor(AppTheme.purple)
             }
 
+            Spacer(minLength: 0)
+
             statusBadge
 
             if showReason && !status.reason.isEmpty {
@@ -235,7 +237,7 @@ struct AttendanceCard: View {
                     .lineLimit(2)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(11)
         .background(AppTheme.paper)
         .cornerRadius(10)
