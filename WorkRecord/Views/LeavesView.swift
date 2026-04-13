@@ -208,13 +208,45 @@ struct LeaveFormSheet: View {
     @State private var toDate = DateHelper.today()
     @State private var days: Double = 1
     @State private var reason = ""
+    @State private var startPeriod = "全天"  // 全天 / 上午 / 下午
+
+    let daysOptions: [Double] = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 10, 14]
+    let periodOptions = ["全天", "上午", "下午"]
 
     var isEditing: Bool { leave != nil }
+
+    /// Auto plant from selected member
+    private var memberPlant: String {
+        guard let m = store.members.first(where: { $0.name == selectedName }) else { return "–" }
+        return m.plant ?? "未指定"
+    }
+
+    /// Auto-calculated end date
+    private var calculatedToDate: String {
+        guard let start = DateHelper.parseDate(fromDate) else { return fromDate }
+        // For half day, end = start
+        if days <= 0.5 { return fromDate }
+        // Calculate working days to add (skip weekends)
+        var wholeDays = Int(ceil(days)) - 1
+        if startPeriod == "下午" && days == 1 {
+            // Afternoon start + 1 day = next working day
+            wholeDays = 1
+        }
+        var current = start
+        var added = 0
+        while added < wholeDays {
+            current = Calendar.current.date(byAdding: .day, value: 1, to: current)!
+            if !DateHelper.isWeekend(current) {
+                added += 1
+            }
+        }
+        return DateHelper.dateStr(current)
+    }
 
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("請假資訊")) {
+                Section(header: Text("員工資訊")) {
                     Picker("員工姓名", selection: $selectedName) {
                         Text("選擇員工").tag("")
                         ForEach(store.members) { m in
@@ -222,30 +254,65 @@ struct LeaveFormSheet: View {
                         }
                     }
 
+                    if !selectedName.isEmpty {
+                        HStack {
+                            Text("廠別")
+                            Spacer()
+                            Text(memberPlant)
+                                .foregroundColor(AppTheme.muted)
+                        }
+                    }
+                }
+
+                Section(header: Text("假別與時段")) {
                     Picker("假別", selection: $type) {
                         ForEach(leaveTypeOptions, id: \.self) { Text($0) }
                     }
 
-                    HStack {
-                        Text("天數")
-                        Spacer()
-                        TextField("1", value: $days, format: .number)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.decimalPad)
-                            .frame(width: 60)
+                    Picker("時段", selection: $startPeriod) {
+                        ForEach(periodOptions, id: \.self) { Text($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: startPeriod) { newVal in
+                        if newVal == "上午" || newVal == "下午" {
+                            if days >= 1 { /* keep */ } else { days = 0.5 }
+                        }
+                        recalcEndDate()
                     }
                 }
 
-                Section(header: Text("日期")) {
+                Section(header: Text("日期與天數")) {
                     DatePicker("起始日期", selection: Binding(
                         get: { DateHelper.parseDate(fromDate) ?? Date() },
-                        set: { fromDate = DateHelper.dateStr($0) }
+                        set: {
+                            fromDate = DateHelper.dateStr($0)
+                            recalcEndDate()
+                        }
                     ), displayedComponents: .date)
 
-                    DatePicker("結束日期", selection: Binding(
-                        get: { DateHelper.parseDate(toDate) ?? Date() },
-                        set: { toDate = DateHelper.dateStr($0) }
-                    ), displayedComponents: .date)
+                    Picker("天數", selection: $days) {
+                        ForEach(daysOptions, id: \.self) { d in
+                            Text(d == Double(Int(d)) ? "\(Int(d)) 天" : "\(d, specifier: "%.1f") 天").tag(d)
+                        }
+                    }
+                    .onChange(of: days) { _ in recalcEndDate() }
+
+                    HStack {
+                        Text("結束日期")
+                        Spacer()
+                        Text(toDate)
+                            .foregroundColor(AppTheme.muted)
+                    }
+
+                    if startPeriod != "全天" {
+                        HStack {
+                            Text("備註")
+                            Spacer()
+                            Text(startPeriod == "上午" ? "上午請假（08:30–12:00）" : "下午請假（13:00–17:30）")
+                                .font(.system(size: 11))
+                                .foregroundColor(AppTheme.blue)
+                        }
+                    }
                 }
 
                 Section(header: Text("事由")) {
@@ -260,11 +327,15 @@ struct LeaveFormSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("儲存") { saveLeave() }
-                        .disabled(selectedName.isEmpty || fromDate.isEmpty || toDate.isEmpty)
+                        .disabled(selectedName.isEmpty || fromDate.isEmpty)
                 }
             }
             .onAppear { loadData() }
         }
+    }
+
+    private func recalcEndDate() {
+        toDate = calculatedToDate
     }
 
     private func loadData() {
@@ -275,13 +346,22 @@ struct LeaveFormSheet: View {
             toDate = l.to
             days = l.days
             reason = l.reason
+            // Infer period from days
+            if l.days == 0.5 {
+                if l.reason.contains("下午") || l.reason.contains("午後") {
+                    startPeriod = "下午"
+                } else if l.reason.contains("上午") {
+                    startPeriod = "上午"
+                }
+            }
         } else {
             fromDate = DateHelper.dateStr(store.selectedDate)
-            toDate = DateHelper.dateStr(store.selectedDate)
+            recalcEndDate()
         }
     }
 
     private func saveLeave() {
+        toDate = calculatedToDate
         if var l = leave {
             l.name = selectedName
             l.type = type
