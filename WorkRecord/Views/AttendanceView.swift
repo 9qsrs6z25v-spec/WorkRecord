@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AttendanceView: View {
     @EnvironmentObject var store: DataStore
+    @State private var selectedDate = DateHelper.todayDate()
     @State private var showDutyForm = false
     @State private var showFieldMenu = false
     @State private var fieldTitle = true
@@ -11,13 +12,16 @@ struct AttendanceView: View {
     @State private var fieldPlant = false
     @State private var fieldReason = true
 
-    private var ds: String { DateHelper.dateStr(store.selectedDate) }
-    private var isHol: Bool { DateHelper.isWeekend(store.selectedDate) }
+    private var ds: String { DateHelper.dateStr(selectedDate) }
+    private var isHol: Bool { DateHelper.isWeekend(selectedDate) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionTitle(icon: "👥", title: "人員出勤狀態",
-                         subtitle: "\(ds)（\(DateHelper.weekdayLabel(store.selectedDate))）")
+            SectionTitle(icon: "👥", title: "人員出勤狀態")
+
+            // Date picker
+            DatePickerCard(selectedDate: $selectedDate)
+                .environmentObject(store)
 
             statsGrid
             attendanceCards
@@ -134,8 +138,8 @@ struct AttendanceView: View {
 
     // MARK: - Heatmap
     private var heatmapCard: some View {
-        let y = Calendar.current.component(.year, from: store.selectedDate)
-        let m = Calendar.current.component(.month, from: store.selectedDate) - 1
+        let y = Calendar.current.component(.year, from: selectedDate)
+        let m = Calendar.current.component(.month, from: selectedDate) - 1
 
         return CardView {
             VStack(alignment: .leading, spacing: 10) {
