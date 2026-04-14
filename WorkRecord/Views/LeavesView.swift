@@ -28,6 +28,9 @@ struct LeavesView: View {
             DatePickerCard(selectedDate: $store.selectedDate)
                 .environmentObject(store)
 
+            // Today's leaves card
+            todayLeavesCard
+
             CardView {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -66,6 +69,71 @@ struct LeavesView: View {
             LeaveFormSheet(leave: editingLeave)
                 .environmentObject(store)
         }
+    }
+
+    // MARK: - Today Leaves Card
+    private var todayLeavesCard: some View {
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
+        let leavers = store.members.compactMap { m -> (Member, AttendanceStatus)? in
+            let s = store.getStatus(name: m.name, dateStr: ds)
+            if s.code != "present" && s.code != "holiday" && s.code != "duty" && s.code != "night-rest" {
+                return (m, s)
+            }
+            return nil
+        }
+
+        return CardView(
+            background: Color.clear,
+            borderColor: Color(hex: "d29922").opacity(0.3)
+        ) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("🏖️ 當日請假人員")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Color(hex: "a07020"))
+                        .kerning(2)
+                    Spacer()
+                    Text("\(ds)（\(wd)）")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "c09040"))
+                }
+
+                if leavers.isEmpty {
+                    Text("當日全員出勤 🎉")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "c09040"))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                } else {
+                    let rows = stride(from: 0, to: leavers.count, by: 2).map { i in
+                        Array(leavers[i..<min(i+2, leavers.count)])
+                    }
+                    VStack(spacing: 8) {
+                        ForEach(rows, id: \.first!.0.id) { pair in
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(pair, id: \.0.id) { (member, status) in
+                                    LeaveMiniCard(member: member, status: status)
+                                }
+                                if pair.count == 1 {
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+        }
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "fff8e1"), Color(hex: "fce4ec"), Color(hex: "f3e8ff")],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            .cornerRadius(14)
+            .padding(.horizontal, 14)
+            .padding(.bottom, 14)
+        )
     }
 
     // MARK: - Field Menu
