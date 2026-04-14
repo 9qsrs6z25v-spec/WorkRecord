@@ -56,9 +56,20 @@ struct OverviewView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                        ForEach(todayMtgs) { m in
-                            MeetingMiniCard(meeting: m)
+                    let rows = stride(from: 0, to: todayMtgs.count, by: 2).map { i in
+                        Array(todayMtgs[i..<min(i+2, todayMtgs.count)])
+                    }
+                    VStack(spacing: 8) {
+                        ForEach(rows, id: \.first!.id) { pair in
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(pair) { m in
+                                    MeetingMiniCard(meeting: m)
+                                }
+                                if pair.count == 1 {
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -110,9 +121,20 @@ struct OverviewView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                        ForEach(leavers, id: \.0.id) { (member, status) in
-                            LeaveMiniCard(member: member, status: status)
+                    let rows = stride(from: 0, to: leavers.count, by: 2).map { i in
+                        Array(leavers[i..<min(i+2, leavers.count)])
+                    }
+                    VStack(spacing: 8) {
+                        ForEach(rows, id: \.first!.0.id) { pair in
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(pair, id: \.0.id) { (member, status) in
+                                    LeaveMiniCard(member: member, status: status)
+                                }
+                                if pair.count == 1 {
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -214,13 +236,14 @@ struct LeaveMiniCard: View {
             Text("🏷️ \(status.label)")
                 .font(.system(size: 11))
                 .foregroundColor(Color(hex: "a07020"))
+            Spacer(minLength: 0)
             if !status.reason.isEmpty {
                 Text(status.reason)
                     .font(.system(size: 10))
                     .foregroundColor(.gray)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.white.opacity(0.55))
         .cornerRadius(10)
