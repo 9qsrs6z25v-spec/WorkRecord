@@ -187,13 +187,14 @@ struct MeetingMiniCard: View {
                     .font(.system(size: 11))
                     .foregroundColor(.gray)
             }
+            Spacer(minLength: 0)
             if !meeting.note.isEmpty {
                 Text(meeting.note)
                     .font(.system(size: 10))
                     .foregroundColor(.gray.opacity(0.7))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.white.opacity(0.55))
         .cornerRadius(10)
