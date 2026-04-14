@@ -2,14 +2,13 @@ import SwiftUI
 
 struct OverviewView: View {
     @EnvironmentObject var store: DataStore
-    @State private var selectedDate = DateHelper.todayDate()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionTitle(icon: "📋", title: "總覽", subtitle: "APFACD-1-06")
 
             // Date picker
-            DatePickerCard(selectedDate: $selectedDate)
+            DatePickerCard(selectedDate: $store.selectedDate)
                 .environmentObject(store)
 
             // Today's meetings
@@ -27,8 +26,8 @@ struct OverviewView: View {
 
     // MARK: - Meetings Card
     private var meetingsCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
         let todayMtgs = store.meetings
             .filter { $0.date == ds }
             .sorted { $0.time < $1.time }
@@ -88,8 +87,8 @@ struct OverviewView: View {
 
     // MARK: - Leaves Card
     private var leavesCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
         let leavers = store.members.compactMap { m -> (Member, AttendanceStatus)? in
             let s = store.getStatus(name: m.name, dateStr: ds)
             if s.code != "present" && s.code != "holiday" && s.code != "duty" && s.code != "night-rest" {
@@ -153,9 +152,9 @@ struct OverviewView: View {
 
     // MARK: - Duty Card
     private var dutyCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
-        let isWE = DateHelper.isWeekend(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
+        let isWE = DateHelper.isWeekend(store.selectedDate)
         let dayDuties = store.duties
             .filter { $0.date == ds }
             .sorted { d1, d2 in

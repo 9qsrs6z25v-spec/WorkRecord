@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MeetingsView: View {
     @EnvironmentObject var store: DataStore
-    @State private var selectedDate = DateHelper.todayDate()
     @State private var showForm = false
     @State private var editingMeeting: Meeting?
 
@@ -30,7 +29,7 @@ struct MeetingsView: View {
     // MARK: - Date Picker
     private var meetingDatePicker: some View {
         let todayDate = DateHelper.todayDate()
-        let diff = Calendar.current.dateComponents([.day], from: todayDate, to: Calendar.current.startOfDay(for: selectedDate)).day ?? 0
+        let diff = Calendar.current.dateComponents([.day], from: todayDate, to: Calendar.current.startOfDay(for: store.selectedDate)).day ?? 0
 
         return CardView(background: AppTheme.ink, borderColor: AppTheme.gold.opacity(0.3)) {
             VStack(alignment: .leading, spacing: 12) {
@@ -40,10 +39,10 @@ struct MeetingsView: View {
                     .kerning(2)
 
                 HStack(alignment: .lastTextBaseline, spacing: 4) {
-                    Text(DateHelper.dateStr(selectedDate))
+                    Text(DateHelper.dateStr(store.selectedDate))
                         .font(.system(size: 22, weight: .black))
                         .foregroundColor(.white)
-                    Text("（\(DateHelper.weekdayLabel(selectedDate))）\(DateHelper.isWeekend(selectedDate) ? " 例假日" : "")")
+                    Text("（\(DateHelper.weekdayLabel(store.selectedDate))）\(DateHelper.isWeekend(store.selectedDate) ? " 例假日" : "")")
                         .font(.system(size: 14))
                         .foregroundColor(AppTheme.gold)
                 }
@@ -51,25 +50,25 @@ struct MeetingsView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 7) {
                         QuickDateButton(label: "前天", isSelected: diff == -2) {
-                            selectedDate = DateHelper.addDays(todayDate, -2)
+                            store.selectedDate = DateHelper.addDays(todayDate, -2)
                         }
                         QuickDateButton(label: "昨天", isSelected: diff == -1) {
-                            selectedDate = DateHelper.addDays(todayDate, -1)
+                            store.selectedDate = DateHelper.addDays(todayDate, -1)
                         }
                         QuickDateButton(label: "今天", isSelected: diff == 0) {
-                            selectedDate = todayDate
+                            store.selectedDate = todayDate
                         }
                         QuickDateButton(label: "明天", isSelected: diff == 1) {
-                            selectedDate = DateHelper.addDays(todayDate, 1)
+                            store.selectedDate = DateHelper.addDays(todayDate, 1)
                         }
                         QuickDateButton(label: "後天", isSelected: diff == 2) {
-                            selectedDate = DateHelper.addDays(todayDate, 2)
+                            store.selectedDate = DateHelper.addDays(todayDate, 2)
                         }
                         QuickDateButton(label: "本週五", isSelected: false, isSpecial: true) {
-                            selectedDate = DateHelper.jumpToWeekday(6)
+                            store.selectedDate = DateHelper.jumpToWeekday(6)
                         }
                         QuickDateButton(label: "下週一", isSelected: false, isSpecial: true) {
-                            selectedDate = DateHelper.jumpToWeekday(2)
+                            store.selectedDate = DateHelper.jumpToWeekday(2)
                         }
                     }
                 }
@@ -79,8 +78,8 @@ struct MeetingsView: View {
 
     // MARK: - Today's Meetings
     private var todayMeetingsCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
         let todayMtgs = store.meetings.filter { $0.date == ds }.sorted { $0.time < $1.time }
 
         return CardView(

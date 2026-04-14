@@ -24,6 +24,10 @@ struct LeavesView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionTitle(icon: "🏖️", title: "請假記錄")
 
+            // Date picker
+            DatePickerCard(selectedDate: $store.selectedDate)
+                .environmentObject(store)
+
             CardView {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
