@@ -31,6 +31,7 @@
 
 /* Begin PBXFileReference section */
 		A2000021000000000000001B /* WorkRecord.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorkRecord.entitlements; sourceTree = "<group>"; };
+		A2000022000000000000001C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000010000000000000001 /* WorkRecordApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkRecordApp.swift; sourceTree = "<group>"; };
 		A20000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A20000030000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -76,6 +77,7 @@
 		A50000020000000000000002 /* WorkRecord */ = {
 			isa = PBXGroup;
 			children = (
+				A2000022000000000000001C /* Info.plist */,
 				A2000021000000000000001B /* WorkRecord.entitlements */,
 				A20000010000000000000001 /* WorkRecordApp.swift */,
 				A20000020000000000000002 /* ContentView.swift */,
@@ -345,9 +347,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WorkRecord/WorkRecord.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WorkRecord/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "峰哥管家";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -358,7 +361,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tsmc.workrecord;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -376,9 +379,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WorkRecord/WorkRecord.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WorkRecord/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "峰哥管家";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -389,7 +393,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tsmc.workrecord;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
