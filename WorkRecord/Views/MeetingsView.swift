@@ -221,10 +221,35 @@ struct MeetingFormSheet: View {
 
     @State private var date = DateHelper.today()
     @State private var name = ""
-    @State private var startTime = "09:00"
+    @State private var startHour = 9
+    @State private var startMinute = 0
     @State private var duration = 60
     @State private var place = "AP6A"
     @State private var note = ""
+
+    // Duration options from 5 min to 8 hours
+    private let durationOptions: [Int] = [
+        5, 10, 15, 20, 25, 30, 45,
+        60, 75, 90, 105, 120,
+        150, 180, 210, 240,
+        300, 360, 420, 480
+    ]
+
+    private var startTimeStr: String {
+        String(format: "%02d:%02d", startHour, startMinute)
+    }
+
+    private var endTimeStr: String {
+        DateHelper.calcEndTime(start: startTimeStr, durationMinutes: duration)
+    }
+
+    private func durationLabel(_ min: Int) -> String {
+        if min < 60 { return "\(min) 分" }
+        if min % 60 == 0 { return "\(min / 60) 小時" }
+        let h = min / 60
+        let m = min % 60
+        return "\(h)h\(m)m"
+    }
 
     var isEditing: Bool { meeting != nil }
 
@@ -239,32 +264,85 @@ struct MeetingFormSheet: View {
 
                     TextField("會議名稱", text: $name)
 
-                    HStack {
-                        Text("開始時間")
-                        Spacer()
-                        TextField("09:00", text: $startTime)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                    }
-
-                    Picker("會議長度", selection: $duration) {
-                        ForEach(meetingDurationOptions, id: \.1) { opt in
-                            Text(opt.0).tag(opt.1)
-                        }
-                    }
-
-                    HStack {
-                        Text("結束時間")
-                        Spacer()
-                        Text(DateHelper.calcEndTime(start: startTime, durationMinutes: duration))
-                            .foregroundColor(AppTheme.muted)
-                    }
-
                     Picker("地點", selection: $place) {
                         ForEach(meetingPlaceOptions, id: \.self) { Text($0) }
                     }
 
                     TextField("議程/說明", text: $note)
+                }
+
+                // MARK: - Start Time (wheel picker)
+                Section(header: Text("開始時間")) {
+                    HStack(spacing: 0) {
+                        Picker("時", selection: $startHour) {
+                            ForEach(0..<24, id: \.self) { h in
+                                Text(String(format: "%02d", h)).tag(h)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+
+                        Text(":")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(AppTheme.muted)
+
+                        Picker("分", selection: $startMinute) {
+                            ForEach(Array(stride(from: 0, to: 60, by: 5)), id: \.self) { m in
+                                Text(String(format: "%02d", m)).tag(m)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                    }
+                    .frame(height: 120)
+                }
+
+                // MARK: - Duration (horizontal scroll)
+                Section(header: Text("會議長度")) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(durationOptions, id: \.self) { min in
+                                Button(action: { duration = min }) {
+                                    Text(durationLabel(min))
+                                        .font(.system(size: 12, weight: duration == min ? .bold : .regular))
+                                        .foregroundColor(duration == min ? .white : AppTheme.ink)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .background(duration == min ? AppTheme.ink : AppTheme.paper)
+                                        .cornerRadius(20)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(duration == min ? AppTheme.gold : AppTheme.border, lineWidth: 1)
+                                        )
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                // MARK: - End Time Preview
+                Section {
+                    HStack {
+                        Text("預覽")
+                            .font(.system(size: 13))
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Text(startTimeStr)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(AppTheme.blue)
+                            Text("–")
+                                .foregroundColor(AppTheme.muted)
+                            Text(endTimeStr)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(AppTheme.blue)
+                            Text("（\(durationLabel(duration))）")
+                                .font(.system(size: 11))
+                                .foregroundColor(AppTheme.muted)
+                        }
+                    }
                 }
             }
             .navigationTitle(isEditing ? "編輯會議" : "新增會議")
@@ -286,18 +364,19 @@ struct MeetingFormSheet: View {
         if let m = meeting {
             date = m.date
             name = m.name
-            place = m.place
+            place = ["AP6A", "AP6B", "遠端", "其他"].contains(m.place) ? m.place : "其他"
             note = m.note
             if !m.time.isEmpty {
                 let parts = m.time.split(separator: "–").map { String($0).trimmingCharacters(in: .whitespaces) }
                 if parts.count == 2 {
-                    startTime = parts[0]
                     let sp = parts[0].split(separator: ":").compactMap { Int($0) }
                     let ep = parts[1].split(separator: ":").compactMap { Int($0) }
                     if sp.count == 2 && ep.count == 2 {
+                        startHour = sp[0]
+                        startMinute = (sp[1] / 5) * 5  // round to nearest 5
                         let dur = (ep[0] * 60 + ep[1]) - (sp[0] * 60 + sp[1])
-                        let opts = [30, 60, 90, 120, 180, 240]
-                        duration = opts.min(by: { abs($0 - dur) < abs($1 - dur) }) ?? 60
+                        // Find closest option
+                        duration = durationOptions.min(by: { abs($0 - dur) < abs($1 - dur) }) ?? 60
                     }
                 }
             }
@@ -305,8 +384,7 @@ struct MeetingFormSheet: View {
     }
 
     private func saveMeeting() {
-        let endTime = DateHelper.calcEndTime(start: startTime, durationMinutes: duration)
-        let time = "\(startTime)–\(endTime)"
+        let time = "\(startTimeStr)–\(endTimeStr)"
         if var m = meeting {
             m.date = date
             m.name = name
