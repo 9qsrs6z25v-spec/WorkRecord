@@ -17,6 +17,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 	<key>UTImportedTypeDeclarations</key>
 	<array/>
 </dict>
