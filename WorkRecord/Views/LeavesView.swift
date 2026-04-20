@@ -24,6 +24,14 @@ struct LeavesView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionTitle(icon: "🏖️", title: "請假記錄")
 
+            // Date picker
+            DatePickerCard(selectedDate: $store.selectedDate)
+                .environmentObject(store)
+
+            // Today's leaves card
+            TodayLeavesCardView()
+                .environmentObject(store)
+
             CardView {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -375,5 +383,77 @@ struct LeaveFormSheet: View {
             store.addLeave(l)
         }
         dismiss()
+    }
+}
+
+// MARK: - Today Leaves Card (standalone View for reactive updates)
+struct TodayLeavesCardView: View {
+    @EnvironmentObject var store: DataStore
+
+    private var ds: String { DateHelper.dateStr(store.selectedDate) }
+    private var wd: String { DateHelper.weekdayLabel(store.selectedDate) }
+
+    private var leavers: [(Member, AttendanceStatus)] {
+        store.members.compactMap { m in
+            let s = store.getStatus(name: m.name, dateStr: ds)
+            if s.code != "present" && s.code != "holiday" && s.code != "duty" && s.code != "night-rest" {
+                return (m, s)
+            }
+            return nil
+        }
+    }
+
+    var body: some View {
+        CardView(
+            background: Color.clear,
+            borderColor: Color(hex: "d29922").opacity(0.3)
+        ) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("🏖️ 當日請假人員")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Color(hex: "a07020"))
+                        .kerning(2)
+                    Spacer()
+                    Text("\(ds)（\(wd)）")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "c09040"))
+                }
+
+                if leavers.isEmpty {
+                    Text("當日全員出勤 🎉")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "c09040"))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                } else {
+                    let rows = stride(from: 0, to: leavers.count, by: 2).map { i in
+                        Array(leavers[i..<min(i+2, leavers.count)])
+                    }
+                    VStack(spacing: 8) {
+                        ForEach(rows, id: \.first!.0.id) { pair in
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(pair, id: \.0.id) { (member, status) in
+                                    LeaveMiniCard(member: member, status: status)
+                                }
+                                if pair.count == 1 {
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+        }
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "fff8e1"), Color(hex: "fce4ec"), Color(hex: "f3e8ff")],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            .cornerRadius(14)
+            .padding(.horizontal, 14)
+            .padding(.bottom, 14)
+        )
     }
 }

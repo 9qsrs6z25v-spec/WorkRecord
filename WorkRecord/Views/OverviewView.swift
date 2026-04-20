@@ -2,14 +2,13 @@ import SwiftUI
 
 struct OverviewView: View {
     @EnvironmentObject var store: DataStore
-    @State private var selectedDate = DateHelper.todayDate()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionTitle(icon: "📋", title: "總覽", subtitle: "APFACD-1-06")
 
             // Date picker
-            DatePickerCard(selectedDate: $selectedDate)
+            DatePickerCard(selectedDate: $store.selectedDate)
                 .environmentObject(store)
 
             // Today's meetings
@@ -27,8 +26,8 @@ struct OverviewView: View {
 
     // MARK: - Meetings Card
     private var meetingsCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
         let todayMtgs = store.meetings
             .filter { $0.date == ds }
             .sorted { $0.time < $1.time }
@@ -56,9 +55,20 @@ struct OverviewView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                        ForEach(todayMtgs) { m in
-                            MeetingMiniCard(meeting: m)
+                    let rows = stride(from: 0, to: todayMtgs.count, by: 2).map { i in
+                        Array(todayMtgs[i..<min(i+2, todayMtgs.count)])
+                    }
+                    VStack(spacing: 8) {
+                        ForEach(rows, id: \.first!.id) { pair in
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(pair) { m in
+                                    MeetingMiniCard(meeting: m)
+                                }
+                                if pair.count == 1 {
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -77,8 +87,8 @@ struct OverviewView: View {
 
     // MARK: - Leaves Card
     private var leavesCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
         let leavers = store.members.compactMap { m -> (Member, AttendanceStatus)? in
             let s = store.getStatus(name: m.name, dateStr: ds)
             if s.code != "present" && s.code != "holiday" && s.code != "duty" && s.code != "night-rest" {
@@ -110,9 +120,20 @@ struct OverviewView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                        ForEach(leavers, id: \.0.id) { (member, status) in
-                            LeaveMiniCard(member: member, status: status)
+                    let rows = stride(from: 0, to: leavers.count, by: 2).map { i in
+                        Array(leavers[i..<min(i+2, leavers.count)])
+                    }
+                    VStack(spacing: 8) {
+                        ForEach(rows, id: \.first!.0.id) { pair in
+                            HStack(alignment: .top, spacing: 8) {
+                                ForEach(pair, id: \.0.id) { (member, status) in
+                                    LeaveMiniCard(member: member, status: status)
+                                }
+                                if pair.count == 1 {
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -131,9 +152,9 @@ struct OverviewView: View {
 
     // MARK: - Duty Card
     private var dutyCard: some View {
-        let ds = DateHelper.dateStr(selectedDate)
-        let wd = DateHelper.weekdayLabel(selectedDate)
-        let isWE = DateHelper.isWeekend(selectedDate)
+        let ds = DateHelper.dateStr(store.selectedDate)
+        let wd = DateHelper.weekdayLabel(store.selectedDate)
+        let isWE = DateHelper.isWeekend(store.selectedDate)
         let dayDuties = store.duties
             .filter { $0.date == ds }
             .sorted { d1, d2 in
@@ -187,13 +208,14 @@ struct MeetingMiniCard: View {
                     .font(.system(size: 11))
                     .foregroundColor(.gray)
             }
+            Spacer(minLength: 0)
             if !meeting.note.isEmpty {
                 Text(meeting.note)
                     .font(.system(size: 10))
                     .foregroundColor(.gray.opacity(0.7))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.white.opacity(0.55))
         .cornerRadius(10)
@@ -213,13 +235,14 @@ struct LeaveMiniCard: View {
             Text("🏷️ \(status.label)")
                 .font(.system(size: 11))
                 .foregroundColor(Color(hex: "a07020"))
+            Spacer(minLength: 0)
             if !status.reason.isEmpty {
                 Text(status.reason)
                     .font(.system(size: 10))
                     .foregroundColor(.gray)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.white.opacity(0.55))
         .cornerRadius(10)
